@@ -126,10 +126,6 @@ class ProfileController extends Controller
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if ($oldEmail !== $user->getEmail()) {
-                $user->resetPasswordRequest();
-            }
-
             $uow = $this->getEM()->getUnitOfWork();
             $uow->computeChangeSets();
             $changeSet = $uow->getEntityChangeSet($user);
@@ -138,7 +134,12 @@ class ProfileController extends Controller
 
             if (!empty($diffs) && $user instanceof User) {
                 $reason = sprintf('Your %s has been changed', implode(' and ', $diffs));
-                $userNotifier->notifyChange($changeSet['email'][0] ?? $user->getEmail(), $reason);
+
+                if (isset($changeSet['email'][0])) {
+                    $userNotifier->notifyChange($changeSet['email'][0], $reason);
+                }
+
+                $userNotifier->notifyChange($user->getEmail(), $reason);
             }
 
             $this->getEM()->persist($user);
