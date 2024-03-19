@@ -120,7 +120,6 @@ class ProfileController extends Controller
             throw $this->createAccessDeniedException('This user does not have access to this section.');
         }
 
-        $oldEmail = $user->getEmail();
         $form = $this->createForm(ProfileFormType::class, $user);
 
         $form->handleRequest($request);
@@ -132,13 +131,15 @@ class ProfileController extends Controller
 
             $diffs = array_intersect(array_keys($changeSet), ['email', 'username']);
 
-            if (!empty($diffs) && $user instanceof User) {
+            if (!empty($diffs)) {
                 $reason = sprintf('Your %s has been changed', implode(' and ', $diffs));
-                $userNotifier->notifyChange($changeSet['email'][0] ?? $user->getEmail(), $reason);
-            }
 
-            if ($oldEmail !== $user->getEmail()) {
-                $user->resetPasswordRequest();
+                if (isset($changeSet['email'][0])) {
+                    $userNotifier->notifyChange($changeSet['email'][0], $reason);
+                    $user->resetPasswordRequest();
+                }
+
+                $userNotifier->notifyChange($user->getEmail(), $reason);
             }
 
             $this->getEM()->persist($user);
