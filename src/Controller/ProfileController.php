@@ -120,7 +120,6 @@ class ProfileController extends Controller
             throw $this->createAccessDeniedException('This user does not have access to this section.');
         }
 
-        $oldEmail = $user->getEmail();
         $form = $this->createForm(ProfileFormType::class, $user);
 
         $form->handleRequest($request);
@@ -137,6 +136,7 @@ class ProfileController extends Controller
 
                 if (isset($changeSet['email'][0])) {
                     $userNotifier->notifyChange($changeSet['email'][0], $reason);
+                    $user->resetPasswordRequest();
                 }
 
                 $userNotifier->notifyChange($user->getEmail(), $reason);
